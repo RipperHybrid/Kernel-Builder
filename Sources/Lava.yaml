@@ -1,6 +1,6 @@
 Lava:
   kernel:
-    - git clone https://gitlab.com/maksimvlad7/kernel_realme_mt6785.git -b vlad-experimental
+    - git clone https://gitlab.com/maksimvlad7/kernel_realme_mt6785.git -b lava-4.14
   clang:
     - git clone --depth=1 https://gitlab.com/Jprimero15/lolz_clang.git -b main
   config:
