@@ -3,7 +3,7 @@ name: Trigger Kernel Builder
 on:
   push:
     branches:
-      - Test
+      - Master
   workflow_dispatch:
 
 jobs:
