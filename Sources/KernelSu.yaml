@@ -22,6 +22,12 @@ Lava:
   kernelSU:
     - stable
 
+AshBorn:
+  anykernel:
+    - nashc
+  kernelSU:
+    - stable
+
 KernelSU:
   version:
     stable:
