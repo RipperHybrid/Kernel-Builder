@@ -70,13 +70,6 @@ jobs:
           key: ${{ runner.os }}-ccache-${{ github.sha }}
           restore-keys: |
               ${{ runner.os }}-ccache-
-
-      - name: Notify Cached ccache
-        if: steps.cache_ccache.outputs.cache-hit != 'true'
-        run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Cached ccache."
            
       - name: Clone Sources
         run: |
@@ -288,20 +281,20 @@ jobs:
           run: |
             curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-            -d text="[Release] Made a release for version: ${{ matrix.version }}. [Release Details](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${{ github.run_id }})"
+            -d text="[Release] Made a release for ${{ matrix.version }}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${{ github.run_id }}"
       
       - name: Notify on Failure
         if: failure()
         run: |
          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
          -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-         -d text="[Failure - Run #${{ github.run_number }}] Job failed for version: ${{ matrix.version }} [Details here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+         -d text="[Failure - Run #${{ github.run_number }}] Job failed for ${{ matrix.version }}: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Notify on Success
         if: success()
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -d text="[Success - Run #${{ github.run_number }}] Job succeeded for version: ${{ matrix.version }} [Details here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          -d text="[Success - Run #${{ github.run_number }}] Job succeeded for ${{ matrix.version }}: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           
