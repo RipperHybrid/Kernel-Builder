@@ -1,0 +1,37 @@
+LineageOS-20:
+  anykernel:
+    - nashc
+  kernelSU:
+    - stable
+
+Zenitsu:
+  anykernel:
+    - nashc
+  kernelSU:
+    - stable
+
+DivestOS-13:
+  anykernel:
+    - nashc
+  kernelSU:
+    - stable
+
+Lava:
+  anykernel:
+    - nashc
+  kernelSU:
+    - stable
+
+KernelSU:
+  version:
+    stable:
+      - curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+    unstable:
+      - curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+
+AnyKernel3:
+  version:
+    nashc:
+      - git clone https://github.com/RipperHybrid/AnyKernel3.git -b master
+    test:
+      - echo "Test Success!"

@@ -1,6 +1,6 @@
-DivestOS-13:
+Lava:
   kernel:
-    - git clone https://github.com/HowWof/android_kernel_realme_mt6785.git -b divest-13
+    - git clone https://gitlab.com/maksimvlad7/kernel_realme_mt6785.git -b vlad-experimental
   clang:
     - git clone --depth=1 https://gitlab.com/Jprimero15/lolz_clang.git -b main
   config:
