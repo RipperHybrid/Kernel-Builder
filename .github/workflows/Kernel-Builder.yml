@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        version: ["LineageOS-20", "Zenitsu", "DivestOS-13"]
+        version: ["LineageOS-20", "Zenitsu", "DivestOS-13", "Lava"]
 
     env:
       VERSION: ${{ matrix.version }}
@@ -281,7 +281,7 @@ jobs:
           run: |
             curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
             -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-            -d text="[Release] Made a release for ${{ matrix.version }}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${{ github.run_id }}"
+            -d text="[Release] Made a release for ${{ matrix.version }}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${{ matrix.version }}-${{ github.run_id }}"
       
       - name: Notify on Failure
         if: failure()
