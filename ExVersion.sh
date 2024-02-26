@@ -11,9 +11,10 @@ TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}"
 # Function to send Telegram message
 send_telegram_message() {
     message="$1"
+    version_info="$2"
     curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
         -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        -d "text=${message}"
+        -d "text=${message} Version: ${version_info}"
 }
 
 # Define the path to the Makefile
@@ -31,11 +32,11 @@ if [ -f "$MAKEFILE_PATH" ]; then
     echo "Extracted ${version} kernel version: ${FULL_KERNEL_VERSION} from ${MAKEFILE_PATH}"
 
     # Send Telegram message for successful extraction
-    send_telegram_message "Kernel version extraction successful for ${version}."
+    send_telegram_message "Kernel version extraction successful for ${version}." "${FULL_KERNEL_VERSION}"
 else
     echo "Makefile not found in the kernel directory." >&2
     ls -R "${workspace}/kernel"
 
     # Send Telegram message for failure
-    send_telegram_message "Kernel version extraction failed for ${version}. Makefile not found."
+    send_telegram_message "Kernel version extraction failed for ${version}. Makefile not found." ""
 fi
