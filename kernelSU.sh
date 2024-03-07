@@ -7,7 +7,8 @@ NC='\033[0m' # No Color
 
 # Get version from GitHub environment variable
 version=${VERSION}
-workspace=$1  # GitHub workspace directory passed as an argument
+workspace=$1
+kernelsu-version=${KERNELSU_VERSION}
 
 # Define the YAML file path based on the provided workspace directory
 yaml_file="${workspace}/Sources/KernelSu.yaml"
