@@ -1,5 +1,4 @@
-name: Update version and trigger build if needed
-
+name: Version Tracker & Deploy
 on:
   push:
     branches:
