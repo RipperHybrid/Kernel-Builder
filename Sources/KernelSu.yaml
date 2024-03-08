@@ -2,34 +2,36 @@ LineageOS-20:
   anykernel:
     - nashc
   kernelSU:
-    - stable
+    - stable-pin
 
 Zenitsu:
   anykernel:
     - nashc
   kernelSU:
-    - stable
+    - stable-pin
 
 DivestOS-13:
   anykernel:
     - nashc
   kernelSU:
-    - stable
+    - stable-pin
 
 Lava:
   anykernel:
     - nashc
   kernelSU:
-    - stable
+    - stable-pin
 
 AshBorn:
   anykernel:
     - nashc
   kernelSU:
-    - stable
+    - stable-pin
 
 KernelSU:
   version:
+    stable-pin:
+      - curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s kernelsu-version
     stable:
       - curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
     unstable:
@@ -38,6 +40,6 @@ KernelSU:
 AnyKernel3:
   version:
     nashc:
-      - git clone https://github.com/RipperHybrid/AnyKernel3.git -b master
+      - git clone https://github.com/HowWof/AnyKernel3.git -b master
     test:
       - echo "Test Success!"
