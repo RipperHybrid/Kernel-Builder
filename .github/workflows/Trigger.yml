@@ -54,3 +54,5 @@ jobs:
             # Trigger Kernel Builder Workflow
             gh workflow run Kernel-Builder.yml -R ${{ github.repository }} -F trigger_kernel_builder=true
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
