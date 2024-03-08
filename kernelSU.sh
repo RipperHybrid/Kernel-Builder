@@ -37,6 +37,8 @@ kernelSU_commands=$(echo "$json" | jq -r --arg version "$kernelSU_version" '.Ker
 # Print the commands that will be executed
 echo -e "${GREEN}kernelSU.sh will execute following commands:${NC}"
 echo "$kernelSU_commands" | while read -r command; do
+# Replace the placeholder with the actual value
+    command=${command//kernelsu-version/$kernelsu_version}
     echo -e "${RED}$command${NC}"
 done
 
@@ -45,5 +47,7 @@ cd kernel || exit
 
 # Execute the commands
 echo "$kernelSU_commands" | while read -r command; do
+    # Replace the placeholder with the actual value
+    command=${command//kernelsu-version/$kernelsu_version}
     eval "$command"
 done
