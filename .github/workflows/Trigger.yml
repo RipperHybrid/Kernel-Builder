@@ -3,7 +3,7 @@ name: Version Tracker & Deploy
 on:
   push:
     branches:
-      - master
+      - Master
   schedule:
     - cron: '0 */12 * * *'  # Scheduled to run every 12 hours
 
