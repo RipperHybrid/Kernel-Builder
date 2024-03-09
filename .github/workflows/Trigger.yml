@@ -8,7 +8,7 @@ on:
     - cron: '0 */12 * * *'  # Scheduled to run every 12 hours
 
 jobs:
-  check_and_build:
+  Tracker-Deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
