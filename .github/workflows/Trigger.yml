@@ -5,7 +5,8 @@ on:
     branches:
       - Master
   schedule:
-    - cron: '0 */12 * * *'  # Scheduled to run every 12 hours
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
 
 jobs:
   Tracker-Deploy:
@@ -29,14 +30,13 @@ jobs:
           fi
 
       - name: Update version and trigger build if needed
-        if: env.update_needed == 'true' || github.event_name == 'push'
+        if: env.update_needed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           echo "${LATEST_RELEASE}" > ksu_version.txt
           if [ "${LATEST_RELEASE}" = "" ]; then
             echo "Version is not updated. No build triggered."
           else
             echo "Version updated. Triggering build..."
-            # Delete old releases and tags
             releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases")
             release_ids=$(echo $releases | jq '.[].id')
 
@@ -53,7 +53,6 @@ jobs:
               echo "Deleted tag: $tag"
             done
 
-            # Trigger Kernel Builder Workflow
             gh workflow run Kernel-Builder.yml -R ${{ github.repository }} -F trigger_kernel_builder=true
           fi
         env:
