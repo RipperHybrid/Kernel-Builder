@@ -19,6 +19,8 @@ jobs:
         run: |
           LATEST_RELEASE=$(curl --silent "https://api.github.com/repos/tiann/KernelSU/releases/latest" | jq -r .tag_name)
           CURRENT_RELEASE=$(cat ksu_version.txt || true)
+          echo "Latest release tag version: $LATEST_RELEASE"
+          echo "Current version from ksu_version.txt: $CURRENT_RELEASE"
           if [ "$LATEST_RELEASE" != "$CURRENT_RELEASE" ]; then
             echo "LATEST_RELEASE=${LATEST_RELEASE}" >> $GITHUB_ENV
             echo "update_needed=true" >> $GITHUB_ENV
