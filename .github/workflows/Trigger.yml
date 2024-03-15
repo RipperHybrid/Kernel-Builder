@@ -37,6 +37,12 @@ jobs:
             echo "Version is not updated. No build triggered."
           else
             echo "Version updated. Triggering build..."
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add ksu_version.txt
+            git commit -m "Update version to $LATEST_RELEASE"
+            git push origin Master
+            
             releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases")
             release_ids=$(echo $releases | jq '.[].id')
 
