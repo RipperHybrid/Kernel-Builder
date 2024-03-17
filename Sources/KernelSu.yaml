@@ -22,12 +22,6 @@ Lava:
   kernelSU:
     - stable-pin
 
-AshBorn:
-  anykernel:
-    - nashc
-  kernelSU:
-    - stable-pin
-
 KernelSU:
   version:
     stable-pin:
