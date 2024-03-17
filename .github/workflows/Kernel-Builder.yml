@@ -34,12 +34,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         
-      - name: Checkout Completed
-        run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Checkout Completed."
-     
       - name: Setup Environment
         run: |
            sudo apt update
@@ -48,19 +42,13 @@ jobs:
            sudo pip3 install yq
            echo "/usr/lib/ccache" >> $GITHUB_PATH
            echo "USE_CCACHE=1" >> $GITHUB_ENV
-           run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Set up the environment Done."
+           echo "${{ matrix.version }}: Set up the environment Done."
 
       - name: Set up ccache
         run: |
           echo "/usr/lib/ccache" >> $GITHUB_PATH
           echo "USE_CCACHE=1" >> $GITHUB_ENV
-          run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -d text="${{ matrix.version }}: Set up ccache."
+          echo "${{ matrix.version }}: Set up ccache."
 
       - name: Cache ccache
         uses: actions/cache@v2
@@ -78,18 +66,12 @@ jobs:
           ./clone.sh "${{ github.workspace }}"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Cloned sources."
+          echo "${{ matrix.version }}: Cloned sources."
 
       - name: Add Clang to PATH
         run: |
           echo "${CLANG_PATH}" >> $GITHUB_PATH
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Added Clang to PATH."
+          echo "${{ matrix.version }}: Added Clang to PATH."
 
       - name: Extract kernel version from Makefile
         run: |
@@ -98,8 +80,6 @@ jobs:
           ./ExVersion.sh "${{ github.workspace }}"
         env:
          VERSION: ${{ matrix.version }}
-         TELEGRAM_CHAT_ID: ${{ env.TELEGRAM_CHAT_ID }}
-         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
       - name: Extract sources
         run: |
@@ -108,10 +88,7 @@ jobs:
           ./ExSource.sh "${{ github.workspace }}" "$VERSION"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Extracted sources."
+          echo "${{ matrix.version }}: Extracted sources."
 
       - name: Compile kernel
         run: |
@@ -120,20 +97,14 @@ jobs:
           ./build.sh "${{ github.workspace }}" "$VERSION"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Compiled kernel."
+          echo "${{ matrix.version }}: Compiled kernel."
 
       - name: Make output directory for kernel
         run: |
           mkdir outw
           mkdir outw/false
           mkdir outw/true
-          run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -d text="${{ matrix.version }}: Made output directory for kernel."
+          echo "${{ matrix.version }}: Made output directory for kernel."
           
       - name: Move kernel without KernelSU support to output directory
         run: |
@@ -142,10 +113,7 @@ jobs:
           ./move.sh "${{ github.workspace }}"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Moved kernel without KernelSU support to the output directory."
+          echo "${{ matrix.version }}: Moved kernel without KernelSU support to the output directory."
 
       - name: Clean build environment
         run: |
@@ -154,27 +122,18 @@ jobs:
           ./clean.sh "${{ github.workspace }}"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Cleaned build environment."
+          echo "${{ matrix.version }}: Cleaned build environment."
 
       - name: Set KERNELSU environment variable to true
         run: |
            echo "KERNELSU=true" >> $GITHUB_ENV
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Set KERNELSU environment variable to true."
+           echo "${{ matrix.version }}: Set KERNELSU environment variable to true."
 
       - name: Set KERNELSU_VERSION environment variable
         run: |
           version=$(cat ksu_version.txt)
           echo "KERNELSU_VERSION=$version" >> $GITHUB_ENV
           echo "Read KERNELSU_VERSION: $version"
-          run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -d text="${{ matrix.version }}: Set KERNELSU_VERSION environment variable."
 
       - name: Add KernelSU support to kernel
         run: |
@@ -183,10 +142,7 @@ jobs:
           ./kernelSU.sh "${{ github.workspace }}"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Added KernelSU support to the kernel."
+          echo "${{ matrix.version }}: Added KernelSU support to the kernel."
 
       - name: Compile kernel with KernelSU support
         run: |
@@ -195,10 +151,7 @@ jobs:
           ./build.sh "${{ github.workspace }}"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Compiled kernel with KernelSU support."
+          echo "${{ matrix.version }}: Compiled kernel with KernelSU support."
 
       - name: Move kernel with KernelSU support to output directory
         run: |
@@ -207,10 +160,7 @@ jobs:
           ./move.sh "${{ github.workspace }}"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-           -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-           -d text="${{ matrix.version }}: Moved kernel with KernelSU support to the output directory."
+          echo "${{ matrix.version }}: Moved kernel with KernelSU support to the output directory."
 
       - name: Clone AnyKernel3
         run: |
@@ -219,28 +169,19 @@ jobs:
           ./anykernel.sh "${{ github.workspace }}"
         env:
           VERSION: ${{ matrix.version }}
-          run: |
-            curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-            -d text="${{ matrix.version }}: Cloned AnyKernel3 repository."
+          echo "${{ matrix.version }}: Cloned AnyKernel3 repository."
 
       - name: Set ZIP_NO_KSU and ZIP_KSU environment variables
         run: |
           echo "ZIP_NO_KSU=${{ env.VERSION }}-NoKernelSU.zip" >> $GITHUB_ENV
           echo "ZIP_KSU=${{ env.VERSION }}-KernelSU-$(cat ksu_version.txt).zip" >> $GITHUB_ENV
-          run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -d text="${{ matrix.version }}: Set ZIP_NO_KSU and ZIP_KSU environment variables."
+          echo "${{ matrix.version }}: Set ZIP_NO_KSU and ZIP_KSU environment variables."
 
       - name: Make AnyKernel3 zip
         run: |
           chmod +x makezip.sh
           ./makezip.sh
-          run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -d text="${{ matrix.version }}: Made AnyKernel3 zip."
+          echo "${{ matrix.version }}: Made AnyKernel3 zip."
 
       - name: Set Build Date # For Build Date Info, currently using Asia/Manila
         run: |
@@ -278,23 +219,8 @@ jobs:
              - Support: Ask In [Realme 8 AOSP](https://t.me/Realme8AOSPGroup) for assistance
           draft: false
           prerelease: false
-          run: |
-            curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-            -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-            -d text="[Release] Made a release for ${{ matrix.version }}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${{ matrix.version }}-${{ github.run_id }}"
-      
-      - name: Notify on Failure
-        if: failure()
-        run: |
-         curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-         -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-         -d text="[Failure - Run #${{ github.run_number }}] Job failed for ${{ matrix.version }}: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Notify on Success
-        if: success()
+      - name: Upload Kernel Files to Telegram
         run: |
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
-          -d chat_id=${{ env.TELEGRAM_CHAT_ID }} \
-          -d text="[Success - Run #${{ github.run_number }}] Job succeeded for ${{ matrix.version }}: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-          
+         curl -F document=@${{ github.workspace }}/${{ env.ZIP_NO_KSU }} "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ env.TELEGRAM_CHAT_ID }}"
+         curl -F document=@${{ github.workspace }}/${{ env.ZIP_KSU }} "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ env.TELEGRAM_CHAT_ID }}"
