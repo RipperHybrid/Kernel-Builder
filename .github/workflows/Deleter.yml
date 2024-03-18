@@ -1,29 +1,22 @@
-name: Branch Run Deleter
+name: Run Deleter
 
 on:
   push:
     branches:
-      - 'Test-2'
-  schedule:
-    - cron: '0 0 * * *'  # Runs every day at midnight UTC
+      - '*'
   workflow_dispatch:
 
 jobs:
-  delete-runs:
+  delete_runs:
     runs-on: ubuntu-latest
     steps:
-      - name: Get all runs for Test-2 branch and delete them
-        id: delete_runs
+      - name: Delete old runs
         run: |
-          ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs")
-          TEST_2_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2" and .id != env.CURRENT_RUN_ID) | .id')
-          echo "Found Test-2 branch runs: $TEST_2_RUNS"
-          if [ -n "$TEST_2_RUNS" ]; then
-            while IFS= read -r run_id; do
-              echo "Deleting run with ID: $run_id"
-              curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
-              curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/delete"
-            done <<< "$TEST_2_RUNS"
-          else
-            echo "No Test-2 branch runs found."
-          fi
+          ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs")
+          COMPLETED_FAILED_STOPPED_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2" and (.status | test("completed|failure|cancelled"))) | .id')
+          echo "Old runs to delete: $COMPLETED_FAILED_STOPPED_RUNS"
+          for run_id in $COMPLETED_FAILED_STOPPED_RUNS; do
+            echo "Deleting run with ID: $run_id"
+            curl -X DELETE -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs/$run_id"
+          done
+        shell: bash
