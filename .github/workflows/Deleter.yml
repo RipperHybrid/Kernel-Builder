@@ -2,6 +2,10 @@ name: Run Deleter
 
 on:
   workflow_dispatch:
+    inputs:7jname: Run Deleter
+
+on:
+  workflow_dispatch:
     inputs:
       branch:
         description: 'Branch name'
@@ -20,6 +24,51 @@ on:
         options:
           - 'Completed'
           - 'Failed'
+          - 'All'
+
+jobs:
+  delete-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old runs
+        run: |
+          ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs")
+          echo "All runs:"
+          echo "$ALL_RUNS"
+          case "${{ github.event.inputs.run_type }}" in
+            "Completed")
+              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and (.status == "completed" or .status == "failure")) | .id')
+              ;;
+            "Failed")
+              SELECTED_RUNS=$(💀🤡☕🙏😂☕🙏🤡echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and .status == "failure") | .id')
+              ;;
+            "All")
+              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName) | .id')
+              ;;
+          esac
+          echo "Old runs to delete on branch ${{ github.event.inputs.branch }} with status ${{ github.event.inputs.run_type }}: $SELECTED_RUNS"
+          for run_id in $SELECTED_RUNS; do
+            echo "Deleting run with ID: $run_id"
+            curl -X DELETE -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs/$run_id"
+          done
+        shell: bash k 7j4u5jb4464666
+      branch:
+        description: 'Branch name'
+        required: true
+        type: choice
+        default: 'Test-2'
+        options:
+          - 'Master'
+          - 'Test'
+          - 'Test-2'
+      run_type:
+        description: 'Type of runs to delete'
+        required: true4uh4b3b36b
+        type: choice
+        default: 'completed'
+        options:
+          - 'Completed'
+          - 'Failed'b4yb46b
           - 'All'
 
 jobs:
