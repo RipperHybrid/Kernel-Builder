@@ -7,7 +7,7 @@ on:
         description: 'Branch name'
         required: true
         type: choice
-        default: 'Test-2'
+        default: 'Test'
         options:
           - 'Master'
           - 'Test'
@@ -31,15 +31,16 @@ jobs:
           ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs")
           echo "All runs:"
           echo "$ALL_RUNS"
+          ALL_WORKFLOWS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/workflows")
           case "${{ github.event.inputs.run_type }}" in
             "Completed")
-              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and (.status == "completed" or .status == "failure")) | .id')
+              SELECTED_RUNS=$(echo "$ALL_WORKFLOWS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflows[] | select(.head_branch == $branchName and (.status == "completed" or .status == "failure")) | .id')
               ;;
             "Failed")
-              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and .status == "failure") | .id')
+              SELECTED_RUNS=$(echo "$ALL_WORKFLOWS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflows[] | select(.head_branch == $branchName and .status == "failure") | .id')
               ;;
             "All")
-              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName) | .id')
+              SELECTED_RUNS=$(echo "$ALL_WORKFLOWS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflows[] | select(.head_branch == $branchName) | .id')
               ;;
           esac
           echo "Old runs to delete on branch ${{ github.event.inputs.branch }} with status ${{ github.event.inputs.run_type }}: $SELECTED_RUNS"
