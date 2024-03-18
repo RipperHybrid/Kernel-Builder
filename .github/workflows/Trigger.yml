@@ -22,65 +22,50 @@ jobs:
         run: |
           LATEST_RELEASE=$(curl --silent "https://api.github.com/repos/tiann/KernelSU/releases/latest" | jq -r .tag_name)
           CURRENT_RELEASE=$(cat ksu_version.txt || true)
-          echo "Latest release tag version: $LATEST_RELEASE"
-          echo "Current version from ksu_version.txt: $CURRENT_RELEASE"
+          echo "Latest release: ${LATEST_RELEASE}"
+          echo "Current release: ${CURRENT_RELEASE}"
           if [ "$LATEST_RELEASE" != "$CURRENT_RELEASE" ]; then
-            echo "LATEST_RELEASE=${LATEST_RELEASE}" >> $GITHUB_ENV
+            echo "New release: ${LATEST_RELEASE}. Triggering build..."
+            echo "${LATEST_RELEASE}" > ksu_version.txt
             echo "update_needed=true" >> $GITHUB_ENV
           else
-            echo "update_needed=false" >> $GITHUB_ENV
+            LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+            LAST_COMMIT_TIME=$(git log -1 --pretty=%ct)
+            CURRENT_TIME=$(date +%s)
+            if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 60 ]]; then
+              echo "Detected [TEST] commit in last minute. Triggering test build..."
+              echo "update_needed=true" >> $GITHUB_ENV
+            else
+              echo "Version up to date. No build needed."
+            fi
           fi
 
-      - name: Check commit message and time for [TEST]
-        if: env.update_needed != 'true'
-        run: |
-          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
-          LAST_COMMIT_TIME=$(git log -1 --pretty=%at)
-          CURRENT_TIME=$(date +%s)
-          if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 60 ]]; then
-            echo "Found [TEST] in commit message within the last 1 minute. Triggering build..."
-            echo "update_needed=true" >> $GITHUB_ENV
-          fi
-
-      - name: Update version and trigger build if needed
+      - name: Delete old releases and tags
         if: env.update_needed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
-          echo "${LATEST_RELEASE}" > ksu_version.txt
-          if [ "${LATEST_RELEASE}" = "" ]; then
-            echo "Version is not updated. No build triggered."
-          else
-            echo "Version updated. Triggering build..."
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add ksu_version.txt
-            git commit -m "Update version to $LATEST_RELEASE"
-            
-            # Determine the branch to push changes
-            BRANCH=$(echo "${{ github.ref }}" | awk -F'/' '{print $3}')
-            git push origin "$BRANCH"
-            
-            releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases")
-            release_ids=$(echo $releases | jq '.[].id')
+          releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases")
+          release_ids=$(echo $releases | jq '.[].id')
 
-            for id in $release_ids; do
-              curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases/$id"
-              echo "Deleted release with ID: $id"
-            done
+          for id in $release_ids; do
+            curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases/$id"
+            echo "Deleted release with ID: $id"
+          done
 
-            tags=$(git ls-remote --tags origin)
-            tag_names=$(echo "$tags" | awk -F/ '{print $3}')
+          tags=$(git ls-remote --tags origin)
+          tag_names=$(echo "$tags" | awk -F/ '{print $3}')
 
-            for tag in $tag_names; do
-              git push --delete origin $tag
-              echo "Deleted tag: $tag"
-            done
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          for tag in $tag_names; do
+            git push --delete origin $tag
+            echo "Deleted tag: $tag"
+          done
 
-      - name: Trigger Kernel Builder with [TEST] commit
-        if: env.update_needed == 'true'
+      - name: Trigger build
+        if: env.update_needed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
+          git add ksu_version.txt
+          git commit -m "Update version to $LATEST_RELEASE"
+          BRANCH=$(echo "${{ github.ref }}" | awk -F'/' '{print $3}')
+          git push origin "$BRANCH"
           gh workflow run Kernel-Builder.yml -R RipperHybrid/Kernel-Builder -F trigger_kernel_builder=true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set GH_TOKEN to use GitHub CLI
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
