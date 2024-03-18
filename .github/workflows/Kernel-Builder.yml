@@ -173,8 +173,8 @@ jobs:
 
       - name: Set ZIP_NO_KSU and ZIP_KSU environment variables
         run: |
-          echo "ZIP_NO_KSU=${{ env.VERSION }}-NoKernelSU-${{ env.BUILD_DATE//\//- }}.zip" >> $GITHUB_ENV
-          echo "ZIP_KSU=${{ env.VERSION }}-KernelSU-$(cat ksu_version.txt)-${{ env.BUILD_DATE//\//- }}.zip" >> $GITHUB_ENV
+          echo "ZIP_NO_KSU=${{ env.VERSION }}-NoKernelSU-${{ env.BUILD_DATE }}.zip" >> $GITHUB_ENV
+          echo "ZIP_KSU=${{ env.VERSION }}-KernelSU-$(cat ksu_version.txt)-${{ env.BUILD_DATE }}.zip" >> $GITHUB_ENV
           echo "${{ matrix.version }}: Set ZIP_NO_KSU and ZIP_KSU environment variables."
 
       - name: Make AnyKernel3 zip
@@ -185,7 +185,7 @@ jobs:
 
       - name: Set Build Date # For Build Date Info, currently using Asia/Manila
         run: |
-          echo "BUILD_DATE=$(TZ=Asia/Manila date +'%d/%m/%Y')" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(TZ=Asia/Manila date +'%d-%m-%Y')" >> $GITHUB_ENV
 
       - name: Make a release
         uses: softprops/action-gh-release@v1
@@ -194,7 +194,7 @@ jobs:
              ${{ github.workspace }}/${{ env.ZIP_NO_KSU }}
              ${{ github.workspace }}/${{ env.ZIP_KSU }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          name: Realme 8 (nashc) ${{ matrix.version }} Kernel Release - ${{ env.KERNEL_VERSION }}
+          name: Realme 8 (nashc) ${{ matrix.version }} Kernel Release - ${{ env.BUILD_DATE }}
           tag_name: ${{ matrix.version }}-${{ github.run_id }}
           body: |
              **Info:**
@@ -217,10 +217,3 @@ jobs:
 
              **Support Group:**
              - Support: Ask In [Realme 8 AOSP](https://t.me/Realme8AOSPGroup) for assistance
-          draft: false
-          prerelease: false
-
-      - name: Upload Kernel Files to Telegram
-        run: |
-         curl -F document=@${{ github.workspace }}/${{ env.ZIP_NO_KSU }} "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ env.TELEGRAM_CHAT_ID }}"
-         curl -F document=@${{ github.workspace }}/${{ env.ZIP_KSU }} "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ env.TELEGRAM_CHAT_ID }}"
