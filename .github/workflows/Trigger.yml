@@ -43,12 +43,12 @@ jobs:
       - name: Delete old releases and tags
         if: env.update_needed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
-          releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases")
+          releases=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases")
           release_ids=$(echo $releases | jq -r '.[].id')
 
           if [ -n "$release_ids" ]; then
             for id in $release_ids; do
-              curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases/$id"
+              curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$id"
               echo "Deleted release with ID: $id"
             done
           else
