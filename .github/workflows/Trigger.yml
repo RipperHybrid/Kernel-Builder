@@ -34,6 +34,7 @@ jobs:
             CURRENT_TIME=$(date +%s)
             if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 60 ]]; then
               echo "Detected [TEST] commit in last minute. Triggering test build..."
+              echo "${LATEST_RELEASE}" > ksu_version.txt
               echo "update_needed=true" >> $GITHUB_ENV
             else
               echo "Version up to date. No build needed."
@@ -71,7 +72,7 @@ jobs:
           fi
 
       - name: Trigger build
-        if: env.update_needed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        if: env.update_needed == 'true'
         run: |
           if ! git diff --quiet; then
             git add ksu_version.txt
