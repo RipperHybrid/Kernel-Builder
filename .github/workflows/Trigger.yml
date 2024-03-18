@@ -37,8 +37,8 @@ jobs:
           LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
           LAST_COMMIT_TIME=$(git log -1 --pretty=%at)
           CURRENT_TIME=$(date +%s)
-          if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 120 ]]; then
-            echo "Found [TEST] in commit message within the last 2 minutes. Triggering build..."
+          if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 60 ]]; then
+            echo "Found [TEST] in commit message within the last 1 minute. Triggering build..."
             echo "update_needed=true" >> $GITHUB_ENV
           fi
 
@@ -74,7 +74,11 @@ jobs:
               git push --delete origin $tag
               echo "Deleted tag: $tag"
             done
-              gh workflow run Kernel-Builder.yml -R RipperHybrid/Kernel-Builder -F trigger_kernel_builder=true
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger Kernel Builder with [TEST] commit
+        if: env.update_needed == 'true'
+        run: |
+          gh workflow run Kernel-Builder.yml -R RipperHybrid/Kernel-Builder -F trigger_kernel_builder=true
