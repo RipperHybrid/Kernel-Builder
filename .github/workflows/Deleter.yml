@@ -1,0 +1,28 @@
+name: Delete Branch Runs
+
+on:
+  push:
+    branches:
+      - 'Test-2'
+  schedule:
+    - cron: '0 0 * * *'  # Runs every day at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  delete-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get all runs for Test-2 branch
+        id: get_runs
+        run: |
+          ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs")
+          TEST_2_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2") | .id')
+          echo "::set-output name=test_2_runs::$TEST_2_RUNS"
+
+      - name: Delete Test-2 branch runs
+        if: steps.get_runs.outputs.test_2_runs != ''
+        run: |
+          for run_id in ${ALL_RUNS//\\n/ }; do
+            curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id"
+            echo "Deleted run with ID: $run_id"
+          done
