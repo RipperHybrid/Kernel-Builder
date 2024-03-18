@@ -16,7 +16,7 @@ jobs:
         id: get_runs
         run: |
           ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs")
-          TEST_2_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2") | .id')
+          TEST_2_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2" and .id != env.CURRENT_RUN_ID) | .id')
           echo "Found Test-2 branch runs: $TEST_2_RUNS"
           echo "TEST_2_RUNS=$TEST_2_RUNS" >> $GITHUB_ENV
 
