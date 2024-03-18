@@ -12,22 +12,18 @@ jobs:
   delete-runs:
     runs-on: ubuntu-latest
     steps:
-      - name: Get all runs for Test-2 branch
-        id: get_runs
+      - name: Get all runs for Test-2 branch and delete them
+        id: delete_runs
         run: |
           ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs")
           TEST_2_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2" and .id != env.CURRENT_RUN_ID) | .id')
           echo "Found Test-2 branch runs: $TEST_2_RUNS"
-          echo "$TEST_2_RUNS" > test_2_runs.txt
-
-      - name: Debug - Display contents of test_2_runs.txt
-        run: cat test_2_runs.txt
-
-      - name: Delete Test-2 branch runs
-        if: steps.get_runs.outputs.TEST_2_RUNS != ''
-        run: |
-          while IFS= read -r run_id; do
-            echo "Deleting run with ID: $run_id"
-            curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
-            curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/delete"
-          done < test_2_runs.txt
+          if [ -n "$TEST_2_RUNS" ]; then
+            while IFS= read -r run_id; do
+              echo "Deleting run with ID: $run_id"
+              curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
+              curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/delete"
+            done <<< "$TEST_2_RUNS"
+          else
+            echo "No Test-2 branch runs found."
+          fi
