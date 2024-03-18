@@ -12,6 +12,16 @@ on:
           - 'Master'
           - 'Test'
           - 'Test-2'
+      run_type:
+        description: 'Type of runs to delete'
+        required: true
+        type: choice
+        default: 'completed'
+        options:
+          - 'Completed'
+          - 'Failed'
+          - 'Cancelled'
+          - 'All'
 
 jobs:
   delete-runs:
@@ -20,9 +30,27 @@ jobs:
       - name: Delete old runs
         run: |
           ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs")
-          COMPLETED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and .status == "completed") | .id')
-          echo "Old runs to delete on branch ${{ github.event.inputs.branch }}: $COMPLETED_RUNS"
-          for run_id in $COMPLETED_RUNS; do
+          case "${{ github.event.inputs.run_type }}" in
+            "Completed")
+              RUN_STATUS="completed"
+              ;;
+            "Failed")
+              RUN_STATUS="failure"
+              ;;
+            "Cancelled")
+              RUN_STATUS="cancelled"
+              ;;
+            "All")
+              RUN_STATUS="all"
+              ;;
+          esac
+          if [ "$RUN_STATUS" != "all" ]; then
+            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" --arg runStatus "$RUN_STATUS" '.workflow_runs[] | select(.head_branch == $branchName and .status == $runStatus) | .id')
+          else
+            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName) | .id')
+          fi
+          echo "Old runs to delete on branch ${{ github.event.inputs.branch }} with status ${{ github.event.inputs.run_type }}: $SELECTED_RUNS"
+          for run_id in $SELECTED_RUNS; do
             echo "Deleting run with ID: $run_id"
             curl -X DELETE -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs/$run_id"
           done
