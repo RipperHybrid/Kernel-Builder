@@ -20,6 +20,9 @@ jobs:
           echo "Found Test-2 branch runs: $TEST_2_RUNS"
           echo "$TEST_2_RUNS" > test_2_runs.txt
 
+      - name: Debug - Display contents of test_2_runs.txt
+        run: cat test_2_runs.txt
+
       - name: Delete Test-2 branch runs
         if: steps.get_runs.outputs.TEST_2_RUNS != ''
         run: |
