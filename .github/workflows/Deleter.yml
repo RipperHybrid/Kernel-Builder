@@ -1,10 +1,16 @@
 name: Run Deleter
 
 on:
-  push:
-    branches:
-      - '*'
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: true
+        default: 'Test-2'
+        options:
+          - 'Master'
+          - 'Test'
+          - 'Test-2'
 
 jobs:
   delete:
@@ -13,9 +19,9 @@ jobs:
       - name: Delete old runs
         run: |
           ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs")
-          COMPLETED_FAILED_STOPPED_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2" and (.status | test("completed|failure|cancelled"))) | .id')
-          echo "Old runs to delete: $COMPLETED_FAILED_STOPPED_RUNS"
-          for run_id in $COMPLETED_FAILED_STOPPED_RUNS; do
+          COMPLETED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and .status == "completed") | .id')
+          echo "Old runs to delete on branch ${{ github.event.inputs.branch }}: $COMPLETED_RUNS"
+          for run_id in $COMPLETED_RUNS; do
             echo "Deleting run with ID: $run_id"
             curl -X DELETE -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs/$run_id"
           done
