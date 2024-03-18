@@ -16,11 +16,10 @@ on:
         description: 'Type of runs to delete'
         required: true
         type: choice
-        default: 'Completed'
+        default: 'completed'
         options:
           - 'Completed'
           - 'Failed'
-          - 'Cancelled'
           - 'All'
 
 jobs:
@@ -34,23 +33,15 @@ jobs:
           echo "$ALL_RUNS"
           case "${{ github.event.inputs.run_type }}" in
             "Completed")
-              RUN_STATUS="completed"
+              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and (.status == "completed" or .status == "failure")) | .id')
               ;;
             "Failed")
-              RUN_STATUS="failure"
-              ;;
-            "Cancelled")
-              RUN_STATUS="cancelled"
+              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and .status == "failure") | .id')
               ;;
             "All")
-              RUN_STATUS="all"
+              SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName) | .id')
               ;;
           esac
-          if [ "$RUN_STATUS" != "all" ]; then
-            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" --arg runStatus "$RUN_STATUS" '.workflow_runs[] | select(.head_branch == $branchName and (.status == $runStatus or (.conclusion == "failure" and $runStatus == "Failed"))) | .id')
-          else
-            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName) | .id')
-          fi
           echo "Old runs to delete on branch ${{ github.event.inputs.branch }} with status ${{ github.event.inputs.run_type }}: $SELECTED_RUNS"
           for run_id in $SELECTED_RUNS; do
             echo "Deleting run with ID: $run_id"
