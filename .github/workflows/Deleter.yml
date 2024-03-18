@@ -16,7 +16,7 @@ on:
         description: 'Type of runs to delete'
         required: true
         type: choice
-        default: 'completed'
+        default: 'Completed'
         options:
           - 'Completed'
           - 'Failed'
@@ -47,7 +47,7 @@ jobs:
               ;;
           esac
           if [ "$RUN_STATUS" != "all" ]; then
-            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" --arg runStatus "$RUN_STATUS" '.workflow_runs[] | select(.head_branch == $branchName and .status == $runStatus) | .id')
+            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" --arg runStatus "$RUN_STATUS" '.workflow_runs[] | select(.head_branch == $branchName and (.status == $runStatus or (.conclusion == "failure" and $runStatus == "Failed"))) | .id')
           else
             SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName) | .id')
           fi
