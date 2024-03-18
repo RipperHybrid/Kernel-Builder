@@ -18,13 +18,13 @@ jobs:
           ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs")
           TEST_2_RUNS=$(echo "$ALL_RUNS" | jq -r '.workflow_runs[] | select(.head_branch == "Test-2" and .id != env.CURRENT_RUN_ID) | .id')
           echo "Found Test-2 branch runs: $TEST_2_RUNS"
-          echo "TEST_2_RUNS=$TEST_2_RUNS" >> $GITHUB_ENV
+          echo "$TEST_2_RUNS" > test_2_runs.txt
 
       - name: Delete Test-2 branch runs
-        if: env.TEST_2_RUNS != ''
+        if: steps.get_runs.outputs.TEST_2_RUNS != ''
         run: |
-          for run_id in ${TEST_2_RUNS//\\n/ }; do
+          while IFS= read -r run_id; do
             echo "Deleting run with ID: $run_id"
             curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
             curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/delete"
-          done
+          done < test_2_runs.txt
