@@ -82,3 +82,5 @@ jobs:
         if: env.update_needed == 'true'
         run: |
           gh workflow run Kernel-Builder.yml -R RipperHybrid/Kernel-Builder -F trigger_kernel_builder=true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Set GH_TOKEN to use GitHub CLI
