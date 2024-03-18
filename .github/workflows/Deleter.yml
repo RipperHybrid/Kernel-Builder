@@ -47,7 +47,7 @@ jobs:
               ;;
           esac
           if [ "$RUN_STATUS" != "all" ]; then
-            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" --arg runStatus "$RUN_STATUS" '.workflow_runs[] | select(.head_branch == $branchName and .conclusion == $runStatus) | .id')
+            SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" --arg runStatus "$RUN_STATUS" '.workflow_runs[] | select(.head_branch == $branchName and .status == $runStatus) | .id')
           else
             SELECTED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName) | .id')
           fi
