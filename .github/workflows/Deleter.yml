@@ -14,7 +14,7 @@ on:
           - 'Test-2'
 
 jobs:
-  delete:
+  delete-runs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete old runs
