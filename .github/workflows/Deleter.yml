@@ -24,6 +24,7 @@ jobs:
         if: env.TEST_2_RUNS != ''
         run: |
           for run_id in ${TEST_2_RUNS//\\n/ }; do
-            curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id"
-            echo "Deleted run with ID: $run_id"
+            echo "Deleting run with ID: $run_id"
+            curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/cancel"
+            curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id/delete"
           done
