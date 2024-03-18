@@ -30,6 +30,8 @@ jobs:
       - name: Delete old runs
         run: |
           ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/RipperHybrid/Kernel-Builder/actions/runs")
+          echo "All runs:"
+          echo "$ALL_RUNS"
           case "${{ github.event.inputs.run_type }}" in
             "Completed")
               RUN_STATUS="completed"
