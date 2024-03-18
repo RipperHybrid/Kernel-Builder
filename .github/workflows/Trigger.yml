@@ -31,6 +31,17 @@ jobs:
             echo "update_needed=false" >> $GITHUB_ENV
           fi
 
+      - name: Check commit message and time for [TEST]
+        if: env.update_needed != 'true'
+        run: |
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+          LAST_COMMIT_TIME=$(git log -1 --pretty=%at)
+          CURRENT_TIME=$(date +%s)
+          if [[ "$LAST_COMMIT_MSG" == "[TEST]*" && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 120 ]]; then
+            echo "Found [TEST] in commit message within the last 2 minutes. Triggering build..."
+            echo "update_needed=true" >> $GITHUB_ENV
+          fi
+
       - name: Update version and trigger build if needed
         if: env.update_needed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
