@@ -9,15 +9,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  Tracker-Deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Set Git configuration
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+
+      - name: Checkout code
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.ref }}
 
-      - name: Check for new release and trigger build if needed
+      - name: Check for new release
         id: check_and_trigger_build
         run: |
           LATEST_RELEASE=$(curl --silent "https://api.github.com/repos/tiann/KernelSU/releases/latest" | jq -r .tag_name)
@@ -28,11 +33,19 @@ jobs:
             echo "New release: ${LATEST_RELEASE}. Triggering build..."
             echo "${LATEST_RELEASE}" > ksu_version.txt
             echo "update_needed=true" >> $GITHUB_ENV
+            git add ksu_version.txt
+            git commit -m "Update KernelSU version to ${LATEST_RELEASE}"
+            BRANCH=$(echo "${{ github.ref }}" | awk -F'/' '{print $3}')
+            git push origin "$BRANCH"
+            LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "LAST_COMMIT_MSG=$LAST_COMMIT_MSG" >> $GITHUB_ENV
           else
             LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
             LAST_COMMIT_TIME=$(git log -1 --pretty=%ct)
+            echo "LAST_COMMIT_MSG=$LAST_COMMIT_MSG" >> $GITHUB_ENV
+            echo "LAST_COMMIT_TIME=$LAST_COMMIT_TIME" >> $GITHUB_ENV
             CURRENT_TIME=$(date +%s)
-            if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 60 ]]; then
+            if [[ "${{ env.LAST_COMMIT_MSG }}" == *"[TEST]"* && $(($CURRENT_TIME - ${{ env.LAST_COMMIT_TIME }})) -lt 60 ]]; then
               echo "Detected [TEST] commit in last minute. Triggering test build..."
               echo "${LATEST_RELEASE}" > ksu_version.txt
               echo "update_needed=true" >> $GITHUB_ENV
@@ -41,15 +54,22 @@ jobs:
             fi
           fi
 
+      - name: Notify Job Start
+        if: env.update_needed == 'true'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.CHANNEL_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: |
+            Kernel build process initiated
+            Last commit: ${{ env.LAST_COMMIT_MSG }}
+            Triggered by: ${{ github.event_name }}
+
       - name: Delete old releases and tags
         if: env.update_needed == 'true'
         run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "GitHub Action"
-
           releases=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases")
           release_ids=$(echo $releases | jq -r '.[].id')
-
           if [ -n "$release_ids" ]; then
             for id in $release_ids; do
               curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$id"
@@ -58,10 +78,8 @@ jobs:
           else
             echo "No releases to delete."
           fi
-
           tags=$(git ls-remote --tags origin)
           tag_names=$(echo "$tags" | awk -F/ '{print $3}')
-
           if [ -n "$tag_names" ]; then
             for tag in $tag_names; do
               git push --delete origin $tag
@@ -71,17 +89,8 @@ jobs:
             echo "No tags to delete."
           fi
 
-      - name: Trigger build
+      - name: Trigger Builder
         if: env.update_needed == 'true'
-        run: |
-          if ! git diff --quiet; then
-            git add ksu_version.txt
-            git commit -m "Update version to $LATEST_RELEASE"
-            BRANCH=$(echo "${{ github.ref }}" | awk -F'/' '{print $3}')
-            git push origin "$BRANCH"
-          else
-            echo "No changes to commit."
-          fi
-          gh workflow run Builder.yml -R ${{ github.repository }} -F trigger_kernel_builder=true
+        run: gh workflow run Builder.yml -R ${{ github.repository }} -F trigger_kernel_builder=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -29,21 +29,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get Last Commit Message
-        run: |
-          last_commit_message=$(git log -1 --pretty=%B)
-          echo "COMMIT=$last_commit_message" >> $GITHUB_ENV
-          echo "Last commit message is: $COMMIT"
-
-      - name: Notify Job Start with Last Commit Message
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.CHANNEL_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          message: |
-            New job started for Kernel: ${{ matrix.version }}
-            Last commit: ${{ env.COMMIT }}
-              
       - name: Setup Environment
         run: |
            sudo apt update
@@ -181,8 +166,8 @@ jobs:
           
       - name: Set ZIP_NO_KSU and ZIP_KSU environment variables
         run: |
-          echo "ZIP_NO_KSU=${{ env.VERSION }}-NoKernelSU-${{ env.BUILD_DATE }}.zip" >> $GITHUB_ENV
-          echo "ZIP_KSU=${{ env.VERSION }}-KernelSU-$(cat ksu_version.txt)-${{ env.BUILD_DATE }}.zip" >> $GITHUB_ENV
+          echo "ZIP_NO_KSU=${{ env.VERSION }}-NO-KSU-${{ env.BUILD_DATE }}.zip" >> $GITHUB_ENV
+          echo "ZIP_KSU=${{ env.VERSION }}-$(cat ksu_version.txt)-KernelSU-${{ env.BUILD_DATE }}.zip" >> $GITHUB_ENV
           echo "${{ matrix.version }}: Set ZIP_NO_KSU and ZIP_KSU environment variables."
  
       - name: Make AnyKernel3 zip
@@ -228,5 +213,5 @@ jobs:
 
       - name: Upload Kernel Files to Telegram
         run: |
-          curl -F document=@${{ github.workspace }}/${{ env.ZIP_NO_KSU }} -F caption="Kernel Version: ${{ env.KERNEL_VERSION }} - Kernel without KernelSU" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.CHANNEL_CHAT_ID }}"
-          curl -F document=@${{ github.workspace }}/${{ env.ZIP_KSU }} -F caption="Kernel Version: ${{ env.KERNEL_VERSION }} - Kernel with KernelSU" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.CHANNEL_CHAT_ID }}"
+          curl -F document=@${{ github.workspace }}/${{ env.ZIP_NO_KSU }} -F caption="⚠️ Only For Custom Roms" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.CHANNEL_CHAT_ID }}"
+          curl -F document=@${{ github.workspace }}/${{ env.ZIP_KSU }} -F caption="⚠️ Only For Custom Roms" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.CHANNEL_CHAT_ID }}"
