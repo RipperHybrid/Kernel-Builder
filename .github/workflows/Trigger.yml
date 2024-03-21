@@ -22,48 +22,66 @@ jobs:
         run: |
           LATEST_RELEASE=$(curl --silent "https://api.github.com/repos/tiann/KernelSU/releases/latest" | jq -r .tag_name)
           CURRENT_RELEASE=$(cat ksu_version.txt || true)
-          echo "Latest release tag version: $LATEST_RELEASE"
-          echo "Current version from ksu_version.txt: $CURRENT_RELEASE"
+          echo "Latest release: ${LATEST_RELEASE}"
+          echo "Current release: ${CURRENT_RELEASE}"
           if [ "$LATEST_RELEASE" != "$CURRENT_RELEASE" ]; then
-            echo "LATEST_RELEASE=${LATEST_RELEASE}" >> $GITHUB_ENV
+            echo "New release: ${LATEST_RELEASE}. Triggering build..."
+            echo "${LATEST_RELEASE}" > ksu_version.txt
             echo "update_needed=true" >> $GITHUB_ENV
           else
-            echo "update_needed=false" >> $GITHUB_ENV
+            LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+            LAST_COMMIT_TIME=$(git log -1 --pretty=%ct)
+            CURRENT_TIME=$(date +%s)
+            if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 60 ]]; then
+              echo "Detected [TEST] commit in last minute. Triggering test build..."
+              echo "${LATEST_RELEASE}" > ksu_version.txt
+              echo "update_needed=true" >> $GITHUB_ENV
+            else
+              echo "Version up to date. No build needed."
+            fi
           fi
 
-      - name: Update version and trigger build if needed
-        if: env.update_needed == 'true' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      - name: Delete old releases and tags
+        if: env.update_needed == 'true'
         run: |
-          echo "${LATEST_RELEASE}" > ksu_version.txt
-          if [ "${LATEST_RELEASE}" = "" ]; then
-            echo "Version is not updated. No build triggered."
-          else
-            echo "Version updated. Triggering build..."
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add ksu_version.txt
-            git commit -m "Update version to $LATEST_RELEASE"
-            
-            # Determine the branch to push changes
-            BRANCH=$(echo "${{ github.ref }}" | awk -F'/' '{print $3}')
-            git push origin "$BRANCH"
-            
-            releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases")
-            release_ids=$(echo $releases | jq '.[].id')
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
 
+          releases=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases")
+          release_ids=$(echo $releases | jq -r '.[].id')
+
+          if [ -n "$release_ids" ]; then
             for id in $release_ids; do
-              curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/releases/$id"
+              curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$id"
               echo "Deleted release with ID: $id"
             done
+          else
+            echo "No releases to delete."
+          fi
 
-            tags=$(git ls-remote --tags origin)
-            tag_names=$(echo "$tags" | awk -F/ '{print $3}')
+          tags=$(git ls-remote --tags origin)
+          tag_names=$(echo "$tags" | awk -F/ '{print $3}')
 
+          if [ -n "$tag_names" ]; then
             for tag in $tag_names; do
               git push --delete origin $tag
               echo "Deleted tag: $tag"
             done
-              gh workflow run Kernel-Builder.yml -R RipperHybrid/Kernel-Builder -F trigger_kernel_builder=true
+          else
+            echo "No tags to delete."
           fi
+
+      - name: Trigger build
+        if: env.update_needed == 'true'
+        run: |
+          if ! git diff --quiet; then
+            git add ksu_version.txt
+            git commit -m "Update version to $LATEST_RELEASE"
+            BRANCH=$(echo "${{ github.ref }}" | awk -F'/' '{print $3}')
+            git push origin "$BRANCH"
+          else
+            echo "No changes to commit."
+          fi
+          gh workflow run Builder.yml -R ${{ github.repository }} -F trigger_kernel_builder=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

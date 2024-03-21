@@ -1,0 +1,28 @@
+name: Run Deleter
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: true
+        type: choice
+        default: 'Test'
+        options:
+          - 'Master'
+          - 'Test'
+
+jobs:
+  delete-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old runs
+        run: |
+          ALL_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs")
+          COMPLETED_RUNS=$(echo "$ALL_RUNS" | jq -r --arg branchName "${{ github.event.inputs.branch }}" '.workflow_runs[] | select(.head_branch == $branchName and .status == "completed") | .id')
+          echo "Old runs to delete on branch ${{ github.event.inputs.branch }}: $COMPLETED_RUNS"
+          for run_id in $COMPLETED_RUNS; do
+            echo "Deleting run with ID: $run_id"
+            curl -X DELETE -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/actions/runs/$run_id"
+          done
+        shell: bash
