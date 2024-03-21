@@ -38,7 +38,7 @@ jobs:
       - name: Notify Job Start with Last Commit Message
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.PERSONAL_CHAT_ID }}
+          to: ${{ secrets.CHANNEL_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           message: |
             New job started for Kernel: ${{ matrix.version }}
@@ -228,5 +228,5 @@ jobs:
 
       - name: Upload Kernel Files to Telegram
         run: |
-          curl -F document=@${{ github.workspace }}/${{ env.ZIP_NO_KSU }} -F caption="Kernel Version: ${{ env.KERNEL_VERSION }} - Kernel without KernelSU" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.PERSONAL_CHAT_ID }}"
-          curl -F document=@${{ github.workspace }}/${{ env.ZIP_KSU }} -F caption="Kernel Version: ${{ env.KERNEL_VERSION }} - Kernel with KernelSU" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.PERSONAL_CHAT_ID }}"
+          curl -F document=@${{ github.workspace }}/${{ env.ZIP_NO_KSU }} -F caption="Kernel Version: ${{ env.KERNEL_VERSION }} - Kernel without KernelSU" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.CHANNEL_CHAT_ID }}"
+          curl -F document=@${{ github.workspace }}/${{ env.ZIP_KSU }} -F caption="Kernel Version: ${{ env.KERNEL_VERSION }} - Kernel with KernelSU" "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.CHANNEL_CHAT_ID }}"
