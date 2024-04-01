@@ -3,52 +3,56 @@
 # Get the build date from environment variables
 BUILD_DATE=${BUILD_DATE:-$(TZ=Asia/Manila date +'%d-%m-%Y')}
 
-# Get ZIP name for kernel without KernelSU from GitHub environment variable
-zip_no_ksu="${ZIP_NO_KSU}"
+# Get the version from the GitHub environment variable
+version="${VERSION}"
 
-# Get ZIP name for kernel with KernelSU from GitHub environment variable
+# Get ZIP names for kernels from GitHub environment variables
+zip_no_ksu="${ZIP_NO_KSU}"
 zip_ksu="${ZIP_KSU}"
 
-# Copy the kernel image to the AnyKernel3 directory and store the names of the copied files in an environment variable
-COPIED_FILES=""
-for file in outw/false/*; do
-    # Add the build date to the file name
-    new_name="$(basename "${file%.*}")-${BUILD_DATE}.${file##*.}"
-    cp "$file" "AnyKernel3/$new_name"
-    COPIED_FILES="${COPIED_FILES} $(basename "$new_name")"
-done
+# Function to modify anykernel.sh with the version
+modify_anykernel_with_version() {
+    sed -i "s/kernel.string=.*/kernel.string=Auto-Built Kernel for Realme 8 (Nashc) - Version: ${version}/" AnyKernel3/anykernel.sh
+}
 
-# Enter AnyKernel3 directory
-cd AnyKernel3 || exit
+# Function to copy kernel images and zip them
+copy_and_zip_kernels() {
+    local output_dir=$1
+    local outw_dir=$2
+    local zip_name=$3
 
-# Zip the kernel without KernelSU support
-zip -r9 "${zip_no_ksu}" *
+    # Copy the kernel image to the AnyKernel3 directory and store the names of the copied files in an environment variable
+    COPIED_FILES=""
+    for file in "$outw_dir"/*; do
+        # Add the build date to the file name
+        new_name="$(basename "${file%.*}")-${BUILD_DATE}.${file##*.}"
+        cp "$file" "AnyKernel3/$new_name"
+        COPIED_FILES="${COPIED_FILES} $(basename "$new_name")"
+    done
 
-# Move the ZIP to Github workspace
-mv "${zip_no_ksu}" "${GITHUB_WORKSPACE}/${zip_no_ksu}"
+    # Enter AnyKernel3 directory
+    cd AnyKernel3 || exit
 
-# Remove the copied files from the AnyKernel3 directory
-for file in $COPIED_FILES; do
-    rm -f "$file"
-done
+    # Modify anykernel.sh with the version
+    modify_anykernel_with_version
 
-# Enter GitHub workspace
-cd "${GITHUB_WORKSPACE}" || exit
+    # Zip the kernel
+    zip -r9 "${output_dir}/${zip_name}" *
 
-# Copy the kernel image with KernelSU support to the AnyKernel3 directory and store the names of the copied files in an environment variable
-COPIED_FILES=""
-for file in outw/true/*; do
-    # Add the build date to the file name
-    new_name="$(basename "${file%.*}")-${BUILD_DATE}.${file##*.}"
-    cp "$file" "AnyKernel3/$new_name"
-    COPIED_FILES="${COPIED_FILES} $(basename "$new_name")"
-done
+    # Move the ZIP to the output directory
+    mv "${zip_name}" "${output_dir}/${zip_name}"
 
-# Enter AnyKernel3 directory
-cd AnyKernel3 || exit
+    # Remove the copied files from the AnyKernel3 directory
+    for file in $COPIED_FILES; do
+        rm -f "$file"
+    done
 
-# Zip the kernel with KernelSU support
-zip -r9 "${zip_ksu}" *
+    # Return to the previous directory
+    cd - || exit
+}
 
-# Move the ZIP to Github workspace
-mv "${zip_ksu}" "${GITHUB_WORKSPACE}/${zip_ksu}"
+# Copy and zip kernel images without KernelSU support
+copy_and_zip_kernels "$GITHUB_WORKSPACE" "outw/false" "$zip_no_ksu"
+
+# Copy and zip kernel images with KernelSU support
+copy_and_zip_kernels "$GITHUB_WORKSPACE" "outw/true" "$zip_ksu"
