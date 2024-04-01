@@ -38,14 +38,14 @@ jobs:
             BRANCH=$(echo "${{ github.ref }}" | awk -F'/' '{print $3}')
             git push origin "$BRANCH"
             LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "LAST_COMMIT_MSG=$LAST_COMMIT_MSG" >> $GITHUB_ENV
+            echo "LAST_COMMIT_MSG=$LAST_COMMIT_MSG" >> $GITHUB_ENV
           else
             LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
             LAST_COMMIT_TIME=$(git log -1 --pretty=%ct)
             echo "LAST_COMMIT_MSG=$LAST_COMMIT_MSG" >> $GITHUB_ENV
             echo "LAST_COMMIT_TIME=$LAST_COMMIT_TIME" >> $GITHUB_ENV
             CURRENT_TIME=$(date +%s)
-            if [[ "${{ env.LAST_COMMIT_MSG }}" == *"[TEST]"* && $(($CURRENT_TIME - ${{ env.LAST_COMMIT_TIME }})) -lt 60 ]]; then
+            if [[ "$LAST_COMMIT_MSG" == *"[TEST]"* && $(($CURRENT_TIME - $LAST_COMMIT_TIME)) -lt 60 ]]; then
               echo "Detected [TEST] commit in last minute. Triggering test build..."
               echo "${LATEST_RELEASE}" > ksu_version.txt
               echo "update_needed=true" >> $GITHUB_ENV
