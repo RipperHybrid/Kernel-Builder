@@ -176,6 +176,7 @@ jobs:
           ./makezip.sh
           echo "${{ matrix.version }}: Made AnyKernel3 zip."
         env:
+        VERSION: ${{ matrix.version }}
          BUILD_DATE: ${{ env.BUILD_DATE }}
          ZIP_NO_KSU: ${{ env.ZIP_NO_KSU }}
          ZIP_KSU: ${{ env.ZIP_KSU }}
