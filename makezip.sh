@@ -21,7 +21,6 @@ copy_and_zip_kernels() {
     local outw_dir=$2
     local zip_name=$3
 
-    # Copy the kernel image to the AnyKernel3 directory and store the names of the copied files in an environment variable
     COPIED_FILES=""
     for file in "$outw_dir"/*; do
         # Add the build date to the file name
